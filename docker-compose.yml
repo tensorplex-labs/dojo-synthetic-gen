@@ -1,0 +1,56 @@
+---
+volumes:
+  redis-data:
+
+networks:
+  dojo-synthetic-gen-network:
+    driver: bridge
+
+services:
+  redis-service:
+    env_file:
+      - .env
+    image: redis/redis-stack-server:7.4.0-v0
+    environment:
+      # CHANGE THE PASSWORD TO A PASSWORD YOU WANT TO USE
+      REDIS_ARGS: "--requirepass ${REDIS_PASSWORD} --user ${REDIS_USERNAME} on >${REDIS_PASSWORD} ~* allcommands"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    expose:
+      - 6379
+    volumes:
+      - redis-data:/data
+    ports:
+      - "127.0.0.1:6379:6379"
+    networks:
+      - dojo-synthetic-gen-network
+
+  dojo-synthetic-gen:
+    build: .
+    ports:
+      - "127.0.0.1:5003:5003"
+    env_file:
+      - .env
+    environment:
+      - REDIS_HOST=redis-service
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - REDIS_USERNAME=${REDIS_USERNAME}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+    networks:
+      - dojo-synthetic-gen-network
+    depends_on:
+      redis-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5003/health"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    # allow docker commands inside container
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
