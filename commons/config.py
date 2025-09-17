@@ -43,7 +43,7 @@ class UvicornSettings(BaseSettings):
 
 
 class GenerationSettings(BaseSettings):
-    buffer_size: int = Field(default=2)
+    buffer_size: int = Field(default=256)
 
 
 class Settings(BaseSettings):
