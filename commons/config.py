@@ -36,7 +36,7 @@ class LlmApiSettings(BaseSettings):
 
 
 class UvicornSettings(BaseSettings):
-    num_workers: int = Field(default=20)
+    num_workers: int = Field(default=50)
     port: int = Field(default=5003)
     host: str = Field(default="0.0.0.0")
     log_level: str = Field(default="debug")
