@@ -1,3 +1,9 @@
+## [1.0.4](https://github.com/tensorplex-labs/dojo-synthetic-gen/compare/v1.0.3...v1.0.4) (2025-09-17)
+
+### Bug Fixes
+
+* use redis.get instead of redis.delete ([0fe8cb9](https://github.com/tensorplex-labs/dojo-synthetic-gen/commit/0fe8cb9df9f41fe152f49ffa4a67354960b3ad8f))
+
 ## [1.0.3](https://github.com/tensorplex-labs/dojo-synthetic-gen/compare/v1.0.2...v1.0.3) (2025-09-17)
 
 ## [1.0.2](https://github.com/tensorplex-labs/dojo-synthetic-gen/compare/v1.0.1...v1.0.2) (2025-09-17)
