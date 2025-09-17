@@ -283,7 +283,7 @@ class RedisCache:
         """
         try:
             key = self._build_key(self._answer_key, qa_id)
-            answer = await self.redis.delete(key)
+            answer = await self.redis.get(key)
             return answer
         except Exception as e:
             logger.error(f"Error getting answer from redis {e}")
