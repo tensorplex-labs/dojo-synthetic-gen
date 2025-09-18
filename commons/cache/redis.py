@@ -242,20 +242,20 @@ class RedisCache:
             """
             key = self._build_key(self._question_key)
             # @DEV: dont pop from redis when dev flag is used - remove this in prod pls pls
-            args = parse_cli_args()
-            question_payload = {}
-            if args.env_name and args.env_name == "dev":
-                question = await self.redis.lindex(key, 0)
-            else:
-                question = await self.redis.lpop(key)
-                if question:
-                    question_payload = json.loads(question)  # type: ignore
-                    qa_id = question_payload.get("qa_id")
-                    ans_aug_id = question_payload.get("ans_aug_id")
-                    await self.redis.delete(self._build_key(self._answer_key, qa_id))
-                    await self.redis.delete(
-                        self._build_key(self._answer_key, ans_aug_id)
-                    )
+            # args = parse_cli_args()
+            # question_payload = {}
+            # if args.env_name and args.env_name == "dev":
+            question = await self.redis.lindex(key, 0)
+            # else:
+            #     question = await self.redis.lpop(key)
+            #     if question:
+            #         question_payload = json.loads(question)  # type: ignore
+            #         qa_id = question_payload.get("qa_id")
+            #         ans_aug_id = question_payload.get("ans_aug_id")
+            #         await self.redis.delete(self._build_key(self._answer_key, qa_id))
+            #         await self.redis.delete(
+            #             self._build_key(self._answer_key, ans_aug_id)
+            #         )
             return json.loads(question)  # type: ignore
         except Exception as e:
             logger.error(f"Error get_question from redis, error: {e}")
@@ -304,6 +304,49 @@ class RedisCache:
             logger.error(f"Error storing augmented question in redis, error: {e}")
             raise
 
+    async def remove_qa_by_id(self, qa_id: str) -> int:
+        """
+        removes the given question, its answer, and its augmented answer from redis.
+        """
+        key = self._build_key(self._question_key)
+        try:
+            elements: list[bytes] = await self.redis.lrange(key, 0, -1)
+
+            element_to_delete = None
+            aug_id = None
+            for element_bytes in elements:
+                element_str = element_bytes.decode(self._encoding)
+                try:
+                    payload = json.loads(element_str)
+                    if payload.get("qa_id") == qa_id:
+                        element_to_delete = element_bytes
+                        aug_id = payload.get("ans_aug_id")
+                        break
+                except json.JSONDecodeError:
+                    logger.warning(
+                        f"Could not decode element in list {key}: {element_str}"
+                    )
+                    continue
+
+            if element_to_delete:
+                num_removed: int = await self.redis.lrem(key, 1, element_to_delete)
+                if num_removed > 0:
+                    logger.info(f"Deleted question with qa_id {qa_id} from the queue.")
+                    await self.redis.delete(self._build_key(self._answer_key, qa_id))
+                    if aug_id:
+                        await self.redis.delete(
+                            self._build_key(self._answer_key, aug_id)
+                        )
+                return num_removed
+            else:
+                logger.info(f"Question with qa_id {qa_id} not found in the queue.")
+                return 0
+        except Exception as e:
+            logger.error(
+                f"Error deleting question with qa_id {qa_id} from redis, error: {e}"
+            )
+            raise
+
 
 # for testing.
 # to run:
@@ -318,21 +361,3 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-
-    async def get_question(self):
-        try:
-            """
-            pops element from question queue.
-            """
-            key = self._build_key(self._question_key)
-            # @DEV: dont pop from redis when dev flag is used - remove this in prod pls pls
-            args = parse_cli_args()
-            if args.env_name and args.env_name == "dev":
-                question = await self.redis.lindex(key, 0)
-
-            else:
-                question = await self.redis.lpop(key)
-            return json.loads(question)  # type: ignore
-        except Exception as e:
-            logger.error(f"Error get_question from redis, error: {e}")
-            raise

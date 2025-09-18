@@ -59,6 +59,14 @@ class AnswerRequest(BaseModel):
     qa_id: str
 
 
+class PopQARequest(BaseModel):
+    qa_id: str
+
+
+class PopQAResponse(BaseModel):
+    success: bool
+
+
 @synthetic_gen_router.get(
     "/synthetic-gen",
     response_model=SyntheticGenResponse,
@@ -172,3 +180,20 @@ async def order_answer(request: OrderAnswerRequest):
     except Exception as e:
         logger.error(f"Error order_answer: {e}")
         return AnswerResponse(success=False, ans_id="")
+
+
+@synthetic_gen_router.post("/pop-qa")
+async def pop_qa(request: PopQARequest):
+    """
+    v2 endpoint
+    - pops the given question, its answer, and its augmented answer from redis.
+    """
+    try:
+        num_removed = await cache.remove_qa_by_id(request.qa_id)
+        if num_removed > 0:
+            return PopQAResponse(success=True)
+        else:
+            return PopQAResponse(success=False)
+    except Exception as e:
+        logger.error(f"Error order_answer: {e}")
+        return PopQAResponse(success=False)
