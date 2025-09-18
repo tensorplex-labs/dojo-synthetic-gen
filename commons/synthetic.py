@@ -358,12 +358,12 @@ async def run_dojo_v2_process():
         )
 
         # generate base answer
-        # ans = await generate_answer(
-        #     client, answer_model, question_prompt, selected_topic
-        # )
-        ans = await generate_answer_lchain(
-            answer_model, question_prompt, selected_topic
+        ans = await generate_answer(
+            client, answer_model, question_prompt, selected_topic
         )
+        # ans = await generate_answer_lchain(
+        #     answer_model, question_prompt, selected_topic
+        # )
         ans_payload = _make_answer_payload(ans, question_prompt)
 
         # generate 1 random negatively augmented answer
@@ -375,12 +375,12 @@ async def run_dojo_v2_process():
         augmented_question = await augmenter._augment_question(
             question_prompt, selected_augment
         )
-        aug_ans = await generate_answer_lchain(
-            answer_model, augmented_question.question, selected_topic
-        )
-        # aug_ans = await generate_answer(
-        #     client, answer_model, augmented_question.question, selected_topic
+        # aug_ans = await generate_answer_lchain(
+        #     answer_model, augmented_question.question, selected_topic
         # )
+        aug_ans = await generate_answer(
+            client, answer_model, augmented_question.question, selected_topic
+        )
         aug_ans_payload = _make_answer_payload(aug_ans, augmented_question.question)
 
     except Exception as e:
