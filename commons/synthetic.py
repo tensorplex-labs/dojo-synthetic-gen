@@ -89,7 +89,7 @@ async def generate_question(
         coding_question = response_model.question
 
         # retry if generated question is under 100 tokens
-        # @dev WARNING: if question generation persistently fails (eg. model provider is down), syn-API will spam attempts to generate questions.
+        # @dev WARNING: if question generation persistently fails (eg. model provider is down), syn-gen will spam attempts to generate questions.
         if completion.usage.completion_tokens < 100:
             raise Exception("Incomplete generation, question is under 100 tokens")
         coding_question = additional_notes_for_question_prompt(coding_question)

@@ -11,7 +11,6 @@ from redis import asyncio as aioredis
 from redis.asyncio.client import Redis
 
 from commons.config import RedisSettings, get_settings, parse_cli_args
-from commons.human_feedback.types import HumanFeedbackResponse
 
 
 def build_redis_url() -> str:
@@ -27,7 +26,7 @@ def build_redis_url() -> str:
 class RedisCache:
     _instance: "RedisCache | None" = None
     _key_prefix: str = (
-        "synthetic"  # all entries from synthetic-api should be prefixed with this
+        "synthetic"  # all entries from synthetic-gen should be prefixed with this
     )
     _queue_key: str = "queue"
     _hist_key_prefix: str = "history"  # key prefix to historical data
@@ -183,38 +182,6 @@ class RedisCache:
             logger.opt(exception=True).error(
                 f"Error dequeuing data from key: {current_key}, error: {exc}"
             )
-            raise
-
-    async def store_human_feedback(
-        self, hf_id: str, data: HumanFeedbackResponse | None
-    ):
-        """
-        If HumanFeedbackResponse exists, store it in redis using hf_id as the key.
-        If None, store an error using hf_id as the key.
-        """
-        try:
-            logger.info(f"storing hf-task id {hf_id} in redis")
-            key = self._build_key(self._human_feedback_key_prefix, hf_id)
-
-            # if data is None, store an error for Dojo to pick-up
-            if data is None:
-                logger.error(f"No data to store for hf-task id {hf_id}")
-                error = {
-                    "hf_id": hf_id,
-                    "message": f"No data to store for hf-task id {hf_id}",
-                    "success": False,
-                }
-                error_data = json.dumps(jsonable_encoder(error)).encode(self._encoding)
-                logger.info(f"error_as_str: {error_data}")
-                await self.redis.set(key, error_data)
-                logger.success(f"Stored error for hf-task {hf_id} in redis")
-            else:
-                # otherwise, store the HumanFeedbackResponse in redis
-                hf_data = json.dumps(jsonable_encoder(data)).encode(self._encoding)
-                await self.redis.set(key, hf_data)
-                logger.success(f"Stored hf-task {hf_id} in redis")
-        except Exception as e:
-            logger.error(f"Error adding hf-task {hf_id} to redis, error: {e}")
             raise
 
     async def store_question(self, qa_id: str, question: str, ans_aug_id: str):
