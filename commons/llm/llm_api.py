@@ -94,7 +94,7 @@ async def call_llm(client: instructor.AsyncInstructor, kwargs: dict[str, Any]):
     except asyncio.TimeoutError:
         # if timeout triggers, try with fallback model
         # @dev this is ugly - make this a new function?
-        kwargs["model"] = "anthropic/claude-3.5-sonnet"
+        kwargs["model"] = "qwen/qwen3-coder"
         try:
             response_model, completion = await asyncio.wait_for(
                 client.chat.completions.create_with_completion(**kwargs), timeout=600
